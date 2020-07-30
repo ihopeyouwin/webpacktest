@@ -8,7 +8,23 @@ const OptimiseCss = require('optimize-css-assets-webpack-plugin')
 
 const isDev = process.env.NODE_ENV === 'development'
 const isProd = !isDev
-console.log('prod', isProd)
+const filename = ext => isDev ? `[name].${ext}` : `[name].[hash]${ext}`
+const cssLoaders = (extra) => {
+  let loaders = [
+    {
+      loader: MiniCssExtractPlugin.loader,
+      options: {
+        hmr: isDev,
+        reloadAll: true
+      },
+    },
+    'css-loader'
+  ]
+  if(extra){
+    loaders.push(extra)
+  }
+  return loaders
+}
 
 const optimization = () =>{
   const config = {
@@ -33,7 +49,7 @@ module.exports = {
     analytics: './analytics.js'
   },
   output: {
-    filename: '[name].[contenthash].js',
+    filename: filename('.js'),
     path: path.resolve(__dirname, 'dist')
   },
   resolve: {
@@ -61,23 +77,22 @@ module.exports = {
       }]
     }),
     new MiniCssExtractPlugin({
-      filename: '[name].[contenthash].css',
+      filename: filename('.css'),
     })
   ],
   module: {
     rules: [
       {
         test: /\.css$/,
-        use: [
-          {
-            loader: MiniCssExtractPlugin.loader,
-            options: {
-              hmr: isDev,
-              reloadAll: true
-            },
-          },
-          'css-loader'
-        ]
+        use: cssLoaders()
+      },
+      {
+        test: /\.less$/,
+        use: cssLoaders('less-loader')
+      },
+      {
+        test: /\.s[ac]ss$/,
+        use: cssLoaders('sass-loader')
       },
       {
         test: /\.(png|jpg|svg|gif|ico)$/,
